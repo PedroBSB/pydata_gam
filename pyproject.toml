@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "pydata_gam"
+version = "0.1.0"
+description = "PyData Seattle 2025: Generalized Additive Models: Explainability Strikes Back"
+authors = ["Pedro Albuquerque <pedro.melo.albuquerque@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "pydata_gam", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pygam = "*"
+statsmodels = "*"
+scikit-learn = "*"
+formulaic = "*"
+seaborn = "*"
+numpy = "*"
+pandas = "*"
+matplotlib = "*"
+plotly = "*"
+imageio = "^2.37.0"
+kaleido = "^1.1.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
