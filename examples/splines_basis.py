@@ -1,9 +1,11 @@
 import os
+import io  # <-- NEW: for BytesIO when building the GIF
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as pio
 os.chdir("..")
+
 # Optional (for GIF export) — handled gracefully if missing
 try:
     import imageio.v2 as imageio
@@ -27,13 +29,12 @@ order = 3                                    # cubic
 draws = 20                                   # number of animation states
 
 # Fit a tiny, stable model just to initialize the spline design
-# Use a tiny-noise dummy target; mild lam to help convergence
 y_dummy = 1e-6 * np.random.randn(N)
 gam = LinearGAM(s(0, n_splines=K, spline_order=order), lam=1.0)
 gam.fit(X_in, y_dummy)
 
 # Extract the model matrix on our x-grid (sparse -> dense)
-X_design = gam._modelmat(X_in)               # (N, cols) scipy sparse
+X_design = gam._modelmat(X_in)
 if hasattr(X_design, "toarray"):
     X_design = X_design.toarray()
 
@@ -183,7 +184,7 @@ os.makedirs("./resources", exist_ok=True)
 # 1) Interactive HTML (recommended)
 pio.write_html(fig, file="./resources/basis-fun-anim.html", auto_open=False, include_plotlyjs="cdn")
 
-# 2) Static GIF (optional)
+# 2) Static GIF (optional, requires: pip install imageio kaleido)
 if not HAVE_IMAGEIO:
     print("imageio not installed → skipping GIF export. Install with: pip install imageio")
 else:
@@ -207,18 +208,19 @@ else:
 
         try:
             # Needs kaleido under the hood
-            png_bytes = pio.to_image(f_d, format="png", scale=1)
+            png_bytes = pio.to_image(f_d, format="png", scale=2)
         except Exception as e:
             print("Kaleido not available for static export → skipping GIF.\n"
                   "Install with: pip install kaleido\n", e)
             png_frames = None
             break
 
-        png_frames.append(imageio.imread(png_bytes))
+        # Read PNG bytes into an array via BytesIO (no temp files)
+        png_frames.append(imageio.imread(io.BytesIO(png_bytes)))
 
     if png_frames:
-        # Adjust duration (seconds per frame) to mimic your gganimate pacing
-        imageio.mimsave(gif_path, png_frames, duration=5)
+        # ~12.5 fps (0.08s per frame). Adjust as you like.
+        imageio.mimsave(gif_path, png_frames, duration=0.24, loop=0)
         print("Saved GIF:", gif_path)
 
 print("Saved HTML: ./resources/basis-fun-anim.html")
